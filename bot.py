@@ -23,8 +23,11 @@ async def start_web():
     app.router.add_get("/health", health)
     runner = web.AppRunner(app)
     await runner.setup()
-    await web.TCPSite(runner, "0.0.0.0", PORT).start()
-    log.info("Health check server active on port %s", PORT)
+    try:
+        await web.TCPSite(runner, "0.0.0.0", PORT).start()
+        log.info("Health check server active on port %s", PORT)
+    except Exception as e:
+        log.warning("Health server port %s unavailable (%s), continuing with polling", PORT, e)
     return runner
 
 async def main():
