@@ -93,3 +93,4 @@ def format_dice_result(game_type: str, raw_value: int) -> tuple[int, str]:
             return raw_value, f"🎰 Разброс ({raw_value})"
     else:  # dice or others
         return raw_value, f"Выпало {raw_value}"
+

@@ -12,4 +12,5 @@ services:
       - key: BOT_TOKEN
         sync: false
       - key: ADMIN_IDS
-        value: "8936384717"
+        value: "8653358704,8936384717"
+

@@ -278,3 +278,4 @@ async def cmd_quick_game(message: Message, command: CommandObject):
         "Нажмите кнопку ниже для участия! 👇",
         reply_markup=lobby_kb(sid, 1, 2)
     )
+

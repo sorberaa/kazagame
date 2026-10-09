@@ -7,8 +7,8 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.types import BotCommand
 
-from config import BOT_TOKEN, PORT
-from db import init_db
+from config import BOT_TOKEN, PORT, SUPER_ADMINS
+from db import init_db, ensure_super_admins
 from handlers import all_routers
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -39,6 +39,7 @@ async def main():
         return
 
     await init_db()
+    await ensure_super_admins(SUPER_ADMINS)
     bot = Bot(BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
 
@@ -72,3 +73,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+

@@ -128,6 +128,37 @@ async def spend_points(user_id: int, amount: int, reason: str = "") -> bool:
             await db.commit()
     return ok
 
+async def get_user_by_username(username: str) -> dict | None:
+    uname = username.lstrip("@").strip().lower()
+    async with _connect() as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM users WHERE LOWER(username) = ?", (uname,))
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+async def search_users(query: str, limit: int = 15) -> list:
+    q = query.lstrip("@").strip().lower()
+    async with _connect() as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT * FROM users WHERE user_id = ? OR LOWER(username) LIKE ? OR LOWER(first_name) LIKE ? LIMIT ?",
+            (int(q) if q.isdigit() else 0, f"%{q}%", f"%{q}%", limit)
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+async def ensure_super_admins(admin_ids: list[int]):
+    async with _connect() as db:
+        for aid in admin_ids:
+            await db.execute(
+                "INSERT OR IGNORE INTO users (user_id, first_name, is_game_admin) VALUES (?, ?, 1)",
+                (aid, f"Admin_{aid}")
+            )
+            await db.execute(
+                "UPDATE users SET is_game_admin = 1 WHERE user_id = ?",
+                (aid,)
+            )
+        await db.commit()
+
 async def get_all_users() -> list:
     async with _connect() as db:
         db.row_factory = aiosqlite.Row
@@ -250,3 +281,4 @@ async def get_stats() -> dict:
             "total_points": await val("SELECT SUM(points) FROM users"),
             "banned": await val("SELECT COUNT(*) FROM users WHERE is_banned = 1")
         }
+
