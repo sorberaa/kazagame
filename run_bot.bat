@@ -5,3 +5,4 @@ echo   Запуск игрового Telegram-бота KazaGame
 echo ==============================================
 python bot.py
 pause
+
