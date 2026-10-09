@@ -30,6 +30,25 @@ async def start_web():
         log.warning("Health server port %s unavailable (%s), continuing with polling", PORT, e)
     return runner
 
+async def self_ping():
+    import os
+    import aiohttp
+    url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("PING_URL")
+    if not url:
+        log.info("RENDER_EXTERNAL_URL не задан; фоновый self-ping пропущен")
+        return
+    log.info("Запущен автоматический keep-alive пинг для Render: %s", url)
+    ping_url = f"{url.rstrip('/')}/health"
+    await asyncio.sleep(120)
+    async with aiohttp.ClientSession() as session:
+        while True:
+            try:
+                async with session.get(ping_url, timeout=15) as resp:
+                    log.info("Render keep-alive ping: %s (статус %s)", ping_url, resp.status)
+            except Exception as e:
+                log.warning("Ошибка keep-alive пинга: %s", e)
+            await asyncio.sleep(600)  # каждые 10 минут
+
 async def main():
     if not BOT_TOKEN:
         log.warning("BOT_TOKEN не задан! Бот запущен в режиме ожидания токена.")
@@ -66,11 +85,13 @@ async def main():
     ])
 
     runner = await start_web()
+    ping_task = asyncio.create_task(self_ping())
     try:
         await bot.delete_webhook(drop_pending_updates=True)
         log.info("Бот KazaGame успешно запущен в режиме polling!")
         await dp.start_polling(bot)
     finally:
+        ping_task.cancel()
         await runner.cleanup()
         await bot.session.close()
 
